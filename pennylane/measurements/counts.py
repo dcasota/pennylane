@@ -21,14 +21,14 @@ from collections.abc import Sequence
 import numpy as np
 
 from pennylane import math
+from pennylane.core._capture_measurements import _get_abstract_measurement  # tach-ignore
+from pennylane.core.measurements import SampleMeasurement
+from pennylane.core.operator import Operator
 from pennylane.exceptions import QuantumFunctionError
-from pennylane.operation import Operator
 from pennylane.ops import MeasurementValue
 from pennylane.typing import TensorLike
 from pennylane.wires import Wires
 
-from .capture_measurements import _get_abstract_measurement
-from .measurements import SampleMeasurement
 from .process_samples import process_raw_samples
 
 
@@ -92,12 +92,11 @@ class CountsMP(SampleMeasurement):
             "CountsMP returns a dictionary, which is not compatible with capture."
         )
 
-    @property
-    def hash(self):
+    def __hash__(self):
         """int: returns an integer hash uniquely representing the measurement process"""
         fingerprint = (
             self.__class__.__name__,
-            getattr(self.obs, "hash", "None"),
+            hash(self.obs),
             str(self._eigvals),  # eigvals() could be expensive to compute for large observables
             tuple(self.wires.tolist()),
             self.all_outcomes,

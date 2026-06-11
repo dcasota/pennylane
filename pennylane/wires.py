@@ -17,8 +17,10 @@ This module contains the :class:`Wires` class, which takes care of wire bookkeep
 
 import functools
 import itertools
+import types
 import uuid
 from collections.abc import Hashable, Iterable, Sequence
+from dataclasses import dataclass
 from importlib import import_module, util
 
 import numpy as np
@@ -737,6 +739,47 @@ class Wires(Sequence):
         """Right-hand version of __xor__."""
         return Wires(set(_process(other)) ^ set(self.labels))
 
+    def __class_getitem__(cls, item) -> "AbstractWires":
+        if not isinstance(item, int) and item != ...:
+            raise TypeError(
+                f"AbstractWires can only be subscripted with integers and Ellipsis. Got {item}."
+            )
+        return AbstractWires(item)
+
+
+@dataclass(frozen=True)
+class AbstractWires:
+    """An abstract representation of a sequence of wires that contains the number
+    of wires, useful for resource calculations.
+
+    Args:
+        num_wires (int): The number of wires
+    """
+
+    num_wires: int | types.EllipsisType
+
+    def __eq__(self, other) -> bool:
+        if isinstance(other, AbstractWires):
+            return self.num_wires == other.num_wires
+
+        raise TypeError("Tried to check equality against an abstract wire register.")
+
+    @property
+    def shape(self) -> tuple[int]:
+        """The number of wires expressed as shape ``(num_wires, )``."""
+        return (self.num_wires,)
+
+    @property
+    def dtype(self):
+        """np.int64.  The dtype of wires when used with Catalyst."""
+        return np.int64
+
+    def __hash__(self):
+        return hash(("AbstractWires", self.num_wires))
+
+    def __len__(self) -> int:
+        return self.num_wires
+
 
 WiresLike = Wires | Iterable[Hashable] | Hashable
 
@@ -768,3 +811,27 @@ class DynamicWire:
 
     def __repr__(self):
         return "<DynamicWire>"
+
+
+if jax_available:
+
+    class AbstractQubit(jax.core.AbstractValue):
+        """An aval representing an abstract qubit, usually coming from an allocated qubit"""
+
+        hash_value = hash("AbstractQubit")
+
+        def __eq__(self, other):
+            return isinstance(other, AbstractQubit)
+
+        def __hash__(self):
+            return self.hash_value
+
+        def _iter(self):  # pragma: no cover
+            return
+
+
+def is_abstract_qubit(v):
+    """Returns ``True`` if the provided value is a DynamicJaxprTracer of type AbstractQubit"""
+    if not jax_available:
+        return False
+    return math.is_abstract(v) and isinstance(v.val.aval, AbstractQubit)

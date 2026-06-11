@@ -24,10 +24,10 @@ from typing import Literal
 import numpy as np
 
 import pennylane as qp
+from pennylane.core.operator import Operation
 from pennylane.decomposition import add_decomps, register_resources
-from pennylane.operation import FlatPytree, Operation
 from pennylane.ops.qubit.parametric_ops_multi_qubit import PauliRot
-from pennylane.typing import TensorLike
+from pennylane.typing import FlatPytree, TensorLike
 from pennylane.wires import WiresLike
 
 _pauli_matrices = np.array(
@@ -236,7 +236,7 @@ class SpecialUnitary(Operation):
 
     .. warning::
 
-        This operation only is differentiable when using the JAX, Torch or TensorFlow
+        This operation only is differentiable when using the JAX or Torch
         interfaces, even when using hardware-compatible differentiation techniques like
         the parameter-shift rule.
 
@@ -286,7 +286,7 @@ class SpecialUnitary(Operation):
             -0.29040522+0.00830631j,  0.15015337-0.76933485j]])
 
     The ``SpecialUnitary`` operation also can be differentiated with hardware-compatible
-    differentiation techniques if the JAX, Torch or TensorFlow interface is used.
+    differentiation techniques if the JAX or Torch interface is used.
     See the theoretical background section below for details.
 
     .. details::
@@ -547,7 +547,7 @@ class SpecialUnitary(Operation):
 
             An auto-differentiation framework is required for this function.
             The matrix exponential is not differentiable in Autograd. Therefore this function
-            only supports JAX, Torch and TensorFlow.
+            only supports JAX and Torch.
 
         """
         theta = self.data[0]

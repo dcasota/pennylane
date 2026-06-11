@@ -18,8 +18,8 @@ Contains the MPSPrep template.
 import numpy as np
 
 import pennylane as qp
+from pennylane.core.operator import Operation
 from pennylane.decomposition import add_decomps, register_resources, resource_rep
-from pennylane.operation import Operation
 from pennylane.wires import Wires
 
 
@@ -350,7 +350,7 @@ class MPSPrep(Operation):
         self.hyperparameters["input_wires"] = qp.wires.Wires(wires)
         self.hyperparameters["right_canonicalize"] = right_canonicalize
 
-        if work_wires:
+        if work_wires is not None:
             self.hyperparameters["work_wires"] = qp.wires.Wires(work_wires)
             all_wires = self.hyperparameters["input_wires"] + self.hyperparameters["work_wires"]
         else:

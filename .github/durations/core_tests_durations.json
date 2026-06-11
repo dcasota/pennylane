@@ -23769,7 +23769,7 @@
   "ops/qubit/test_qchem_ops.py::test_label_method[op4-G\\xb2\\u208a-G\\xb2\\u208a\\n(2.35)-G\\xb2\\u208a\\n(2)]": 0.0027513309999847024,
   "ops/qubit/test_qchem_ops.py::test_label_method[op5-G\\xb2\\u208b-G\\xb2\\u208b\\n(2.35)-G\\xb2\\u208b\\n(2)]": 0.0034023609999564997,
   "ops/qubit/test_qchem_ops.py::test_label_method[op6-OrbitalRotation-OrbitalRotation\\n(2.35)-OrbitalRotation\\n(2)]": 0.002030679000000646,
-  "ops/qubit/test_qchem_ops.py::test_label_method[op7-fSWAP-fSWAP\\n(1.23)-fSWAP\\n(1)]": 0.0020455879999872195,
+  "ops/qubit/test_qchem_ops.py::test_label_method[op7-FSWAP-FSWAP\\n(1.23)-FSWAP\\n(1)]": 0.0020455879999872195,
   "ops/qubit/test_sparse.py::TestSparse::test_label": 0.0016975579999893853,
   "ops/qubit/test_sparse.py::TestSparse::test_matrix[sparse_hamiltonian0]": 0.0016201040000112243,
   "ops/qubit/test_sparse.py::TestSparse::test_matrix[sparse_hamiltonian1]": 0.001665269000028502,

@@ -23,6 +23,7 @@ from scipy.sparse.linalg import expm as sparse_expm
 
 import pennylane as qp
 from pennylane import math, queuing
+from pennylane.core.operator import Operation, Operator
 from pennylane.decomposition import (
     add_decomps,
     register_condition,
@@ -34,7 +35,6 @@ from pennylane.exceptions import (
     GeneratorUndefinedError,
     OperatorPropertyUndefined,
 )
-from pennylane.operation import Operation, Operator
 from pennylane.wires import Wires
 
 from .linear_combination import LinearCombination
@@ -227,9 +227,8 @@ class Exp(ScalarSymbolicOp, Operation):
             else f"Exp({self.coeff} {self.base.name})"
         )
 
-    @property
-    def hash(self):
-        return hash((str(self.name), self.base.hash, str(self.coeff)))
+    def __hash__(self):
+        return hash((str(self.name), hash(self.base), str(self.coeff)))
 
     @property
     def coeff(self):

@@ -18,13 +18,15 @@ This submodule defines the symbolic operation that indicates the adjoint of an o
 from collections.abc import Callable
 from functools import lru_cache, partial
 from typing import overload
+from warnings import warn
 
 import pennylane as qp
 from pennylane import pytrees
 from pennylane.capture.autograph import wraps
 from pennylane.compiler import compiler
+from pennylane.core.operator import Operation, Operator
+from pennylane.exceptions import PennyLaneDeprecationWarning
 from pennylane.math import conj, moveaxis, transpose
-from pennylane.operation import Operation, Operator
 from pennylane.queuing import QueuingManager
 
 from .symbolicop import SymbolicOp
@@ -182,8 +184,6 @@ def create_adjoint_op(fn, lazy):
     if isinstance(fn, Operator):
         return Adjoint(fn) if lazy else _single_op_eager(fn, update_queue=True)
     if callable(fn):
-        if qp.capture.enabled():
-            return _capture_adjoint_transform(fn, lazy=lazy)
         return _adjoint_transform(fn, lazy=lazy)
     if fn is None:
         raise ValueError(
@@ -257,6 +257,9 @@ def _adjoint_transform(qfunc: Callable, lazy=True) -> Callable:
     # default adjoint transform when capture is not enabled.
     @wraps(qfunc)
     def wrapper(*args, **kwargs):
+        if qp.capture.enabled():
+            return _capture_adjoint_transform(qfunc, lazy=lazy)(*args, **kwargs)
+
         qscript = qp.tape.make_qscript(qfunc)(*args, **kwargs)
 
         leaves, _ = qp.pytrees.flatten((args, kwargs), lambda obj: isinstance(obj, Operator))
@@ -457,15 +460,16 @@ class AdjointOperation(Adjoint, Operation):
 
     @property
     def basis(self):
+        warn(
+            "Operation.basis is deprecated in v0.46 and will be removed in v0.47. "
+            "qp.is_commuting should be used instead to check commutivity.",
+            PennyLaneDeprecationWarning,
+        )
         return self.base.basis
 
     @property
     def control_wires(self):
         return self.base.control_wires
-
-    def single_qubit_rot_angles(self):
-        omega, theta, phi = self.base.single_qubit_rot_angles()
-        return [-phi, -theta, -omega]
 
     @property
     def grad_method(self):

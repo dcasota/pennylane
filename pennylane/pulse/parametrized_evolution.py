@@ -21,7 +21,7 @@ import warnings
 from collections.abc import Sequence
 
 from pennylane import math
-from pennylane.operation import Operation
+from pennylane.core.operator import Operation
 from pennylane.ops import functions
 from pennylane.queuing import QueuingManager
 from pennylane.typing import TensorLike
@@ -458,8 +458,7 @@ class ParametrizedEvolution(Operation):
         mapped_op.H = self.H.map_wires(wire_map)
         return mapped_op
 
-    @property
-    def hash(self):
+    def __hash__(self):
         """int: Integer hash that uniquely represents the operator."""
         return hash(
             (

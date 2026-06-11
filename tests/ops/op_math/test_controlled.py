@@ -38,10 +38,11 @@ from scipy import sparse
 
 import pennylane as qp
 from pennylane import numpy as pnp
+from pennylane.core.operator import Operation, Operator
 from pennylane.decomposition import gate_sets
 from pennylane.decomposition.decomposition_rule import register_resources
 from pennylane.exceptions import DecompositionUndefinedError
-from pennylane.operation import Operation, Operator
+from pennylane.gradients import parameter_frequencies
 from pennylane.ops.op_math.controlled import Controlled, ControlledOp, ctrl
 from pennylane.tape import QuantumScript
 from pennylane.transforms import decompose
@@ -226,6 +227,7 @@ class TestControlledInit:
         with pytest.raises(ValueError, match="Work wires must be different."):
             Controlled(self.temp_op, control_wires="b", work_wires="b")
 
+    @pytest.mark.jax
     @pytest.mark.parametrize(
         "base",
         [
@@ -383,17 +385,6 @@ class TestControlledProperties:
 
         op = Controlled(DummyOp(1), 0)
         assert op.has_diagonalizing_gates is value
-
-    @pytest.mark.parametrize("value", ("_ops", None))
-    def test_queue_cateogry(self, value):
-        """Test that Controlled defers `_queue_category` to base operator."""
-
-        class DummyOp(Operator):
-            num_wires = 1
-            _queue_category = value
-
-        op = Controlled(DummyOp(1), 0)
-        assert op._queue_category == value
 
     @pytest.mark.parametrize("value", (True, False))
     def test_is_hermitian(self, value):
@@ -569,29 +560,29 @@ class TestControlledMiscMethods:
             assert op1.wires == op2.wires
 
     def test_hash(self):
-        """Test that op.hash uniquely describes an op up to work wires."""
+        """Test that hash(op) uniquely describes an op up to work wires."""
 
         base = qp.RY(1.2, wires=0)
         # different control wires
         op1 = Controlled(base, (1, 2), [0, 1])
         op2 = Controlled(base, (2, 1), [0, 1])
-        assert op1.hash != op2.hash
+        assert hash(op1) != hash(op2)
 
         # different control values
         op3 = Controlled(base, (1, 2), [1, 0])
-        assert op1.hash != op3.hash
-        assert op2.hash != op3.hash
+        assert hash(op1) != hash(op3)
+        assert hash(op2) != hash(op3)
 
         # all variations on default control_values
         op4 = Controlled(base, (1, 2))
         op5 = Controlled(base, (1, 2), [True, True])
         op6 = Controlled(base, (1, 2), [1, 1])
-        assert op4.hash == op5.hash
-        assert op4.hash == op6.hash
+        assert hash(op4) == hash(op5)
+        assert hash(op4) == hash(op6)
 
         # work wires
         op7 = Controlled(base, (1, 2), [0, 1], work_wires="aux")
-        assert op7.hash != op1.hash
+        assert hash(op7) != hash(op1)
 
 
 class TestControlledOperationProperties:
@@ -620,7 +611,8 @@ class TestControlledOperationProperties:
 
         base = DummyOp(1)
         op = Controlled(base, 2)
-        assert op.basis == "Z"
+        with pytest.warns(qp.exceptions.PennyLaneDeprecationWarning):
+            assert op.basis == "Z"
 
     @pytest.mark.parametrize(
         "base, expected",
@@ -635,7 +627,7 @@ class TestControlledOperationProperties:
         """Test parameter-frequencies against expected values."""
 
         op = Controlled(base, (4, 5))
-        assert op.parameter_frequencies == expected
+        assert parameter_frequencies(op) == expected
 
     def test_parameter_frequencies_no_generator_error(self):
         """An error should be raised if the base doesn't have a generator."""
@@ -646,7 +638,7 @@ class TestControlledOperationProperties:
             qp.operation.ParameterFrequenciesUndefinedError,
             match=r"does not have parameter frequencies",
         ):
-            op.parameter_frequencies
+            parameter_frequencies(op)
 
     def test_parameter_frequencies_multiple_params_error(self):
         """An error should be raised if the base has more than one parameter."""
@@ -657,7 +649,7 @@ class TestControlledOperationProperties:
             qp.operation.ParameterFrequenciesUndefinedError,
             match=r"does not have parameter frequencies",
         ):
-            op.parameter_frequencies
+            parameter_frequencies(op)
 
 
 class TestControlledSimplify:

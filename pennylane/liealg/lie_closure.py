@@ -24,7 +24,7 @@ import numpy as np
 
 import pennylane.ops.functions as op_func
 from pennylane import math
-from pennylane.operation import Operator
+from pennylane.core.operator import Operator
 from pennylane.pauli import (
     PauliSentence,
     PauliVSpace,
@@ -174,7 +174,7 @@ def lie_closure(
         # nesting level of the commutators.
         for ps1, ps2 in product(vspace.basis[old_length:], vspace.basis[:initial_length]):
             com = ps1.commutator(ps2)
-            com.simplify(tol=vspace.tol)
+            com.prune(tol=vspace.tol)
 
             if len(com) == 0:  # skip because operators commute
                 continue

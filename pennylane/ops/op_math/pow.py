@@ -22,13 +22,13 @@ from scipy.linalg import fractional_matrix_power
 
 import pennylane as qp
 from pennylane import math
+from pennylane.core.operator import Operation, Operator
 from pennylane.exceptions import (
     AdjointUndefinedError,
     DecompositionUndefinedError,
     PowUndefinedError,
     SparseMatrixUndefinedError,
 )
-from pennylane.operation import Operation, Operator
 from pennylane.ops.identity import Identity
 from pennylane.queuing import QueuingManager, apply
 
@@ -387,7 +387,7 @@ class Pow(ScalarSymbolicOp):
     def simplify(self) -> Union["Pow", Identity]:
         # try using pauli_rep:
         if pr := self.pauli_rep:
-            pr.simplify()
+            pr.prune()
             return pr.operation(wire_order=self.wires)
 
         base = self.base if qp.capture.enabled() else self.base.simplify()

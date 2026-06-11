@@ -17,11 +17,14 @@ This submodule defines a base class for symbolic operations representing operato
 
 from abc import abstractmethod
 from copy import copy
+from warnings import warn
 
 import numpy as np
 
 import pennylane as qp
-from pennylane.operation import _UNSET_BATCH_SIZE, Operator
+from pennylane.core.operator import Operator
+from pennylane.core.operator.base import _UNSET_BATCH_SIZE  # tach-ignore
+from pennylane.exceptions import PennyLaneDeprecationWarning
 from pennylane.queuing import QueuingManager
 
 from .composite import handle_recursion_error
@@ -77,7 +80,6 @@ class SymbolicOp(Operator):
         self._pauli_rep = None
         self.queue()
         self._wires = base.wires
-        self.__queue_category = base._queue_category  # pylint: disable=protected-access
 
     @property
     def batch_size(self):
@@ -105,6 +107,11 @@ class SymbolicOp(Operator):
     @property
     @handle_recursion_error
     def basis(self):
+        warn(
+            "Operation.basis is deprecated in v0.46 and will be removed in v0.47. "
+            "qp.is_commuting should be used instead to check commutivity.",
+            PennyLaneDeprecationWarning,
+        )
         return self.base.basis
 
     @property
@@ -121,10 +128,6 @@ class SymbolicOp(Operator):
     def is_verified_hermitian(self):
         return self.base.is_verified_hermitian
 
-    @property
-    def _queue_category(self):
-        return self.__queue_category  # pylint: disable=protected-access
-
     def queue(self, context=QueuingManager):
         context.remove(self.base)
         context.append(self)
@@ -135,12 +138,11 @@ class SymbolicOp(Operator):
     def arithmetic_depth(self) -> int:
         return 1 + self.base.arithmetic_depth
 
-    @property
-    def hash(self):
+    def __hash__(self):
         return hash(
             (
                 str(self.name),
-                self.base.hash,
+                hash(self.base),
             )
         )
 
@@ -208,14 +210,13 @@ class ScalarSymbolicOp(SymbolicOp):
     def has_matrix(self):
         return self.base.has_matrix
 
-    @property
     @handle_recursion_error
-    def hash(self):
+    def __hash__(self):
         return hash(
             (
                 str(self.name),
                 str(self.scalar),
-                self.base.hash,
+                hash(self.base),
             )
         )
 

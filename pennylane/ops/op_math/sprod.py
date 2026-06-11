@@ -18,8 +18,8 @@ computing the scalar product of operations.
 
 import pennylane as qp
 from pennylane import math
+from pennylane.core.operator import Operator
 from pennylane.exceptions import DecompositionUndefinedError, TermsUndefinedError
-from pennylane.operation import Operator
 from pennylane.ops.op_math.pow import Pow
 from pennylane.ops.op_math.sum import Sum
 from pennylane.queuing import QueuingManager
@@ -307,7 +307,7 @@ class SProd(ScalarSymbolicOp):
         """
         # try using pauli_rep:
         if pr := self.pauli_rep:
-            pr.simplify()
+            pr.prune()
             return pr.operation(wire_order=self.wires)
 
         if self.scalar == 1:
